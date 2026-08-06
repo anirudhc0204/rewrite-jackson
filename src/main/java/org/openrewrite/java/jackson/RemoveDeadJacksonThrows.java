@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 the original author or authors.
+ * Copyright 2026 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.openrewrite.Recipe;
 import org.openrewrite.TreeVisitor;
 import org.openrewrite.internal.ListUtils;
 import org.openrewrite.java.JavaIsoVisitor;
+import org.openrewrite.java.tree.TypeUtils;
 import org.openrewrite.java.tree.J;
 import org.openrewrite.java.tree.JavaType;
 import org.openrewrite.java.tree.NameTree;
@@ -96,12 +97,7 @@ public class RemoveDeadJacksonThrows extends Recipe {
                     if (type instanceof JavaType.FullyQualified) {
                         maybeRemoveImport(((JavaType.FullyQualified) type).getFullyQualifiedName());
                     } else {
-                        maybeRemoveImport("com.fasterxml.jackson.core.JsonProcessingException");
-                        maybeRemoveImport("com.fasterxml.jackson.databind.JsonMappingException");
-                        maybeRemoveImport("tools.jackson.core.exc.JacksonException");
-                        maybeRemoveImport("tools.jackson.core.exc.JsonProcessingException");
-                        maybeRemoveImport("tools.jackson.databind.exc.JsonMappingException");
-                        maybeRemoveImport("tools.jackson.databind.DatabindException");
+                        TARGET_FQNS.forEach(this::maybeRemoveImport);
                     }
                     return null;
                 });
@@ -115,12 +111,8 @@ public class RemoveDeadJacksonThrows extends Recipe {
 
             private boolean isTargetException(NameTree nameTree) {
                 JavaType type = nameTree.getType();
-                if (type instanceof JavaType.FullyQualified) {
-                    String fqn = ((JavaType.FullyQualified) type).getFullyQualifiedName();
-                    if (fqn.startsWith("<")) {
-                        return false;
-                    }
-                    return TARGET_FQNS.contains(fqn);
+                if (TARGET_FQNS.stream().anyMatch(targetFqn -> TypeUtils.isOfClassType(type, targetFqn))) {
+                    return true;
                 }
                 String simpleName = getSimpleName(nameTree);
                 if (!TARGET_SIMPLE_NAMES.contains(simpleName)) {

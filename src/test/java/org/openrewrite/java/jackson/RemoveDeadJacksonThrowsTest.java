@@ -16,10 +16,10 @@
 package org.openrewrite.java.jackson;
 
 import org.junit.jupiter.api.Test;
+import org.openrewrite.InMemoryExecutionContext;
 import org.openrewrite.java.JavaParser;
 import org.openrewrite.test.RecipeSpec;
 import org.openrewrite.test.RewriteTest;
-import org.openrewrite.test.TypeValidation;
 
 import static org.openrewrite.java.Assertions.java;
 
@@ -41,14 +41,6 @@ class RemoveDeadJacksonThrowsTest implements RewriteTest {
             "package tools.jackson.databind;\n" +
             "public class DatabindException extends tools.jackson.core.exc.JacksonException {}\n";
 
-    private static final String JSON_PROCESSING_J2_STUB =
-            "package com.fasterxml.jackson.core;\n" +
-            "public class JsonProcessingException extends Exception {}\n";
-
-    private static final String JSON_MAPPING_J2_STUB =
-            "package com.fasterxml.jackson.databind;\n" +
-            "public class JsonMappingException extends com.fasterxml.jackson.core.JsonProcessingException {}\n";
-
     @Override
     public void defaults(RecipeSpec spec) {
         spec.recipe(new RemoveDeadJacksonThrows())
@@ -57,10 +49,9 @@ class RemoveDeadJacksonThrowsTest implements RewriteTest {
                                 JACKSON_EXCEPTION_J3_STUB,
                                 JSON_PROCESSING_J3_STUB,
                                 JSON_MAPPING_J3_STUB,
-                                DATABIND_EXCEPTION_J3_STUB,
-                                JSON_PROCESSING_J2_STUB,
-                                JSON_MAPPING_J2_STUB))
-                .typeValidationOptions(TypeValidation.none());
+                                DATABIND_EXCEPTION_J3_STUB)
+                        .classpathFromResources(new InMemoryExecutionContext(),
+                                "jackson-core-2", "jackson-databind-2"));
     }
 
     @Test
